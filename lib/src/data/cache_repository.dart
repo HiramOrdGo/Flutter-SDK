@@ -15,10 +15,12 @@ class CacheRepository {
   final StreamController<String?> _userKeyController = StreamController<String?>.broadcast();
   Stream<String?> get userKeyStream => _userKeyController.stream;
 
-  Future<void> initialize({required String instanceName}) async {
-    requestsCacheBox = "$requestsCacheBox-$instanceName";
-    userCacheBox = "$userCacheBox-$instanceName";
-    userKeyKey = "$userKeyKey-$instanceName";
+  Future<void> initialize({String? instanceName}) async {
+    if (instanceName != null) {
+      requestsCacheBox = "$requestsCacheBox-$instanceName";
+      userCacheBox = "$userCacheBox-$instanceName";
+      userKeyKey = "$userKeyKey-$instanceName";
+    }
 
     final directory = await getApplicationDocumentsDirectory();
     Hive.init(directory.path);

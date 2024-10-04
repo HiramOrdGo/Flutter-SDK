@@ -66,7 +66,7 @@ class UserComSDK {
     required String appDomain,
     String? fcmToken,
     bool enableLogging = true,
-    required String instanceName,
+    String? instanceName,
   }) async {
     _mobileSdkKey = mobileSdkKey;
     _integrationsApiKey = integrationsApiKey;
