@@ -20,15 +20,8 @@ import 'package:flutter_user_sdk/src/utils/connection_service.dart';
 class UserComSDK {
   /// Creates or gets object instance
   /// In project Use UserComSDK.instance to trigger methods
-  static UserComSDK get instance => _getOrCreateInstance();
 
-  static UserComSDK? _instance;
-
-  static UserComSDK _getOrCreateInstance() {
-    if (_instance != null) return _instance!;
-    _instance = UserComSDK();
-    return _instance!;
-  }
+  static UserComSDK? instance;
 
   late bool _enableLogging;
 
@@ -51,10 +44,6 @@ class UserComSDK {
   String? _fcmToken;
 
   static const _notificationChannelKey = 'user_com_channel';
-
-  initWithObject(UserComSDK object) {
-    _instance = object;
-  }
 
   /// Trigger initialize method before You use any SDK methods.
   ///

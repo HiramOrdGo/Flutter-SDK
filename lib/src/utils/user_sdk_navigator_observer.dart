@@ -5,7 +5,7 @@ class UserSdkNavigatorObserver extends NavigatorObserver {
   @override
   void didPush(Route route, Route? previousRoute) {
     if (route.settings.name != '/') {
-      UserComSDK.instance.sendScreenEvent(
+      UserComSDK.instance?.sendScreenEvent(
         screenName: route.settings.name ?? 'unnamed',
       );
     }
