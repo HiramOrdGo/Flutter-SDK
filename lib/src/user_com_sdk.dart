@@ -20,15 +20,8 @@ import 'package:flutter_user_sdk/src/utils/connection_service.dart';
 class UserComSDK {
   /// Creates or gets object instance
   /// In project Use UserComSDK.instance to trigger methods
-  static UserComSDK get instance => _getOrCreateInstance();
 
-  static UserComSDK? _instance;
-
-  static UserComSDK _getOrCreateInstance() {
-    if (_instance != null) return _instance!;
-    _instance = UserComSDK();
-    return _instance!;
-  }
+  static UserComSDK? instance;
 
   late bool _enableLogging;
 
@@ -44,7 +37,7 @@ class UserComSDK {
 
   late Repository _repository;
 
-  late CacheRepository _cacheRepository;
+  late CacheRepository cacheRepository;
 
   /// Firebase Messaging token. SDK use notifications to deliver campanies form user.com
   /// You need to create Firebase project and add google-services.json files.
@@ -62,6 +55,7 @@ class UserComSDK {
     required String appDomain,
     String? fcmToken,
     bool enableLogging = true,
+    String? instanceName,
   }) async {
     _mobileSdkKey = mobileSdkKey;
     _integrationsApiKey = integrationsApiKey;
@@ -69,8 +63,8 @@ class UserComSDK {
     _enableLogging = enableLogging;
     _fcmToken = fcmToken;
 
-    _cacheRepository = CacheRepository();
-    await _cacheRepository.initialize();
+    cacheRepository = CacheRepository();
+    await cacheRepository.initialize(instanceName: instanceName);
 
     _setupClient();
 
@@ -78,13 +72,13 @@ class UserComSDK {
       connectedOnInitialize: () async {
         await _registerAnonymousUserSession(fcmToken: _fcmToken);
 
-        RequestsRetryService(_cacheRepository).resendRequests();
+        RequestsRetryService(cacheRepository).resendRequests();
       },
       disconnectedOnInitialize: () async {
         await _registerAnonymousUserSession();
       },
       onConnectionRestored: () async {
-        RequestsRetryService(_cacheRepository).resendRequests(
+        RequestsRetryService(cacheRepository).resendRequests(
           onUserKeyChanged: () => _setupClient(),
         );
       },
@@ -160,7 +154,7 @@ class UserComSDK {
   /// If user wasnt registered this function will lose all reference to user
   Future<void> logoutUser() async {
     await _repository.logoutUser();
-    await _cacheRepository.clearStorage();
+    await cacheRepository.clearStorage();
     log('Logout successful. Creating new anonymous session to track user activity');
     await _registerAnonymousUserSession(fcmToken: _fcmToken);
   }
@@ -207,8 +201,7 @@ class UserComSDK {
         }
       }
       if (notificationAdapter.type == NotificationType.push) {
-        final pushMessage =
-            notificationAdapter.message as PushNotificationMessage;
+        final pushMessage = notificationAdapter.message as PushNotificationMessage;
         if (pushMessageBuilder != null) {
           pushMessageBuilder(pushMessage);
         } else {
@@ -233,8 +226,7 @@ class UserComSDK {
   }
 
   /// Check if Firebase message is coming from User.com
-  bool isUserComMessage(Map<String, dynamic> json) =>
-      NotificationAdapter.isUserComMessage(json);
+  bool isUserComMessage(Map<String, dynamic> json) => NotificationAdapter.isUserComMessage(json);
 
   /// If Firebase message data is coming from User.com, parse the message Object
   /// and retur if it's Push message. Used for displaying in terminated state.
@@ -249,17 +241,17 @@ class UserComSDK {
 
   void _setupClient() {
     final service = UserApiService.create(
-      cacheRepository: _cacheRepository,
+      cacheRepository: cacheRepository,
       mobileSdkKey: _mobileSdkKey,
       integrationsApiKey: _integrationsApiKey,
       appDomain: _appDomain,
-      userKey: _cacheRepository.getUserKey(),
+      userKey: cacheRepository.getUserKey(),
       enableLogging: _enableLogging,
     );
 
     _repository = Repository(
       service: service,
-      cacheRepository: _cacheRepository,
+      cacheRepository: cacheRepository,
     );
   }
 }

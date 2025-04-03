@@ -1,18 +1,27 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
 class CacheRepository {
-  static const String requestsCacheBox = 'userSDKRequestsCache';
-  static const String userCacheBox = 'userSDKCache';
-
-  static const String userKeyKey = 'userk';
+  String requestsCacheBox = 'userSDKRequestsCache';
+  String userCacheBox = 'userSDKCache';
+  String userKeyKey = 'userk';
 
   late final Box requestsBox;
   late final Box box;
 
-  Future<void> initialize() async {
+  final StreamController<String?> _userKeyController = StreamController<String?>.broadcast();
+  Stream<String?> get userKeyStream => _userKeyController.stream;
+
+  Future<void> initialize({String? instanceName}) async {
+    if (instanceName != null) {
+      requestsCacheBox = "$requestsCacheBox-$instanceName";
+      userCacheBox = "$userCacheBox-$instanceName";
+      userKeyKey = "$userKeyKey-$instanceName";
+    }
+
     final directory = await getApplicationDocumentsDirectory();
     Hive.init(directory.path);
     await Hive.openBox<dynamic>(requestsCacheBox);
@@ -37,8 +46,7 @@ class CacheRepository {
       requests.add(
         HiveObject(
           key: requestsBox.keys.toList()[i],
-          object: jsonDecode(requestsBox.values.toList()[i])
-              as Map<String, dynamic>,
+          object: jsonDecode(requestsBox.values.toList()[i]) as Map<String, dynamic>,
         ),
       );
     }
@@ -47,6 +55,8 @@ class CacheRepository {
 
   void addUserKey(String? userKey) {
     box.put(userKeyKey, userKey);
+
+    _userKeyController.add(userKey);
   }
 
   String? getUserKey() {
